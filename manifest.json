@@ -1,0 +1,17 @@
+{
+  "name": "Syncra-music",
+  "short_name": "Syncra",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF007A",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "syncra1.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
