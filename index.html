@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="manifest" href="manifest.json">   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="syncra.css">
+    <link rel="icon" href="syncra1.jpg" type="image/jpeg">
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Syncra</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    </head>
+    
+<body>
+
+    <div id="status-modal">
+        <i id="status-icon" class="fas fa-check-circle"></i>
+        <span id="status-text">Syncra Initialized</span>
+    </div>
+
+    <div id="full-player">
+        <div class="fp-header">
+            <i class="fas fa-chevron-down" onclick="toggleFullPlayer(false)"></i>
+            <span style="font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Playing from Syncra</span>
+            <i class="fas fa-ellipsis-v"></i>
+        </div>
+
+        <div class="fp-artwork" id="fp-art-container">
+            <img id="fp-img" src="syncra1.jpg">
+        </div>
+
+        <div class="fp-info">
+            <h2 id="fp-title">Discover Music</h2>
+            <p id="fp-artist">Select a track to start</p>
+        </div>
+
+        <div class="fp-progress-container">
+            <div class="fp-slider-bg" id="fp-seek-bar">
+                <div class="fp-slider-fill" id="fp-progress"></div>
+            </div>
+            <div class="fp-time-labels">
+                <span id="time-curr">0:00</span>
+                <span id="time-total">0:00</span>
+            </div>
+        </div>
+
+        <div class="fp-main-controls">
+            <i class="fas fa-shuffle" style="color: var(--text-gray);"></i>
+            <i class="fas fa-backward-step" onclick="playPrevious()"></i>
+            <div class="fp-play-btn" id="fp-play-main" onclick="togglePlay()">
+                <i class="fas fa-play"></i>
+            </div>
+            <i class="fas fa-forward-step" onclick="playNext()"></i>
+            <i class="fas fa-repeat" style="color: var(--text-gray);"></i>
+        </div>
+
+        <div class="fp-footer-actions">
+            <i class="fas fa-plus-square"></i>
+            <i class="fas fa-circle-down" id="fp-download" onclick="downloadCurrent()"></i>
+            <i class="fas fa-share-alt"></i>
+            <i class="fas fa-list-ul"></i>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo-area"><img src="syncra1.jpg"><h3>Syncra</h3></div>
+        
+    <button id="top-install-btn" class="install-btn" onclick="installSyncra()">
+        <i class="fas fa-arrow-down-short-wide"></i> INSTALL
+    </button>
+        </header>
+        
+        
+    </header>
+
+    <main id="main-content">
+        <h3 class="section-title">New Releases</h3>
+        <div id="featured-cards" class="card-carousel"></div>
+
+        <h3 class="section-title">Your library</h3>
+        <div id="songs-container" class="track-list-section"></div>
+    </main>
+h
+    <div class="player-bar" onclick="handleMiniPlayerClick(event)">
+        <div class="mini-info">
+            <div class="track-art-sm" style="width: 44px; height: 44px;">
+                <img id="p-img" src="syncra1.jpg">
+                <div id="p-loader" class="mini-loader"><div class="spinner"></div></div>
+            </div>
+            <div>
+                <h5 id="p-title">Not Playing</h5>
+                <p id="p-artist">Syncra Premium</p>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <i class="fas fa-play" id="mini-play-btn" onclick="togglePlay()" style="font-size: 22px;"></i>
+            <i class="fas fa-forward-step" onclick="playNext()" style="font-size: 20px; color: #fff;"></i>
+        </div>
+        <audio id="audio-core"></audio>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-item active"><i class="fas fa-house"></i>Home</div>
+        <div class="nav-item"><i class="fas fa-compass"></i>Explore</div>
+        <div class="nav-item"><i class="fas fa-microphone-lines"></i>Identify</div>
+        <div class="nav-item"><i class="fas fa-download"></i>Downloads</div>
+        <div class="nav-item"><i class="fas fa-bookmark"></i>Library</div>
+    </nav>
+    <script src="syncra.js"></script>
+    </body>
+</html>
