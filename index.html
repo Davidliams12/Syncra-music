@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <meta name="application-name" content="Syncra">
+    <meta name="apple-mobile-web-app-title" content="Syncra">
+
+    <title>Syncra | Premium Audio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/jpeg" href="syncra1.jpg">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-black: #030303;
+            --surface: #0f0f0f;
+            --primary-green: #1DB954;
+            --error-red: #ff4d4d;
+            --info-blue: #3498db;
+            --text-white: #ffffff;
+            --text-gray: #aaaaaa;
+            --player-bg: #1a1a1a; 
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background-color: var(--bg-black); 
+            color: var(--text-white); 
+            font-family: 'Roboto', sans-serif; 
+            overflow: hidden; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            -webkit-user-select: none;
+            user-select: none;
+            position: fixed;
+            width: 100%;
+        }
+
+        h2, h5, p { -webkit-user-select: text; }
+
+        /* --- SEARCH ENGINE STYLING --- */
+        .search-wrapper {
+            padding: 0 20px 10px;
+            display: none;
+        }
+        .search-bar {
+            background: #1a1a1a;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            gap: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: white;
+            flex: 1;
+            outline: none;
+            font-size: 15px;
+        }
+
+        /* --- SWEET & COLOURFUL MODAL SYSTEM --- */
+        #status-modal {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #status-modal.show { top: 30px; }
+        #status-modal i { font-size: 18px; }
+
+        /* --- GENRE RIBBON STYLE --- */
+        .category-container {
+            padding: 10px 0;
+            background: var(--bg-black);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .genre-ribbon {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 0 20px;
+            scrollbar-width: none;
+        }
+        .genre-ribbon::-webkit-scrollbar { display: none; }
+        .genre-btn {
+            background: #1a1a1a;
+            color: var(--text-gray);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .genre-btn.active {
+            background: var(--primary-green);
+            color: #000;
+        }
+
+        /* --- FULL PLAYER OVERLAY --- */
+        #full-player {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #2b181c 0%, #000 100%);
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+            padding: 25px;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .fp-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px;
+        }
+        
+        .fp-header i { font-size: 20px; padding: 10px; cursor: pointer; }
+
+        .fp-artwork { 
+            width: 85%; 
+            aspect-ratio: 1/1; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            margin: 30px auto; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+        .fp-artwork.playing { transform: scale(1.05); }
+        .fp-artwork img { width: 100%; height: 100%; object-fit: cover; }
+
+        .fp-info { padding: 0 10px; margin-top: 10px; }
+        .fp-info h2 { font-size: 28px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fp-info p { color: var(--text-gray); font-size: 18px; margin-top: 4px; }
+
+        .fp-progress-container { margin-top: 40px; padding: 0 10px; }
+        .fp-slider-bg { 
+            width: 100%; 
+            height: 5px; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 10px; 
+            position: relative; 
+            cursor: pointer;
+        }
+        .fp-slider-fill { 
+            position: absolute; 
+            height: 100%; 
+            background: #fff; 
+            width: 0%; 
+            border-radius: 10px; 
+        }
+        .fp-time-labels { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 12px; 
+            font-size: 12px; 
+            color: var(--text-gray); 
+        }
+
+        .fp-main-controls { 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            margin-top: 40px; 
+        }
+        .fp-main-controls i { font-size: 26px; cursor: pointer; }
+        
+        .fp-play-btn { 
+            width: 75px; 
+            height: 75px; 
+            background: #fff; 
+            color: #000; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 30px;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+        }
+
+        .fp-footer-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+            padding: 20px 10px;
+        }
+        .fp-footer-actions i { font-size: 20px; color: var(--text-gray); cursor: pointer; }
+
+        /* --- HOME LAYOUT --- */
+        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-area img { width: 34px; height: 34px; border-radius: 6px; }
+        .logo-area h3 { font-size: 22px; font-weight: 700; letter-spacing: -1px; }
+
+        main { flex: 1; overflow-y: auto; padding-bottom: 220px; scroll-behavior: smooth; }
+        .section-title { font-size: 22px; font-weight: 700; margin: 25px 20px 15px; }
+
+        .card-carousel { 
+            display: flex; 
+            gap: 16px; 
+            overflow-x: auto; 
+            padding: 0 20px; 
+            scrollbar-width: none; 
+        }
+        .card-carousel::-webkit-scrollbar { display: none; }
+
+        /* REDUCED SIZE MUSIC CARD */
+        .music-card { 
+            min-width: 135px; 
+            background: var(--surface); 
+            padding: 10px; 
+            border-radius: 12px; 
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .music-card:active { transform: scale(0.95); }
+        .card-art { 
+            width: 100%; 
+            aspect-ratio: 1/1; 
+            background: #222; 
+            border-radius: 8px; 
+            margin-bottom: 10px; 
+            overflow: hidden; 
+        }
+        .card-art img { width: 100%; height: 100%; object-fit: cover; }
+        .music-card h4 { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .track-list-section { padding: 0 20px; margin-top: 10px; }
+        .track-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            padding: 12px 0; 
+            border-bottom: 1px solid rgba(255,255,255,0.03); 
+            cursor: pointer; 
+        }
+        .track-art-sm { 
+            width: 52px; 
+            height: 52px; 
+            border-radius: 8px; 
+            background: #222; 
+            overflow: hidden; 
+            flex-shrink: 0; 
+            position: relative; 
+        }
+        .track-art-sm img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- MINI LOADER --- */
+        .mini-loader { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .spinner { 
+            width: 22px; 
+            height: 22px; 
+            border: 2px solid transparent; 
+            border-top: 2px solid var(--primary-green); 
+            border-radius: 50%; 
+            animation: spin 0.8s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- PLAYER BAR --- */
+        .player-bar { 
+            position: fixed; 
+            bottom: 90px; 
+            left: 0; 
+            right: 0; 
+            background: #111; 
+            padding: 10px 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-top: 1px solid #222; 
+            z-index: 400; 
+        }
+        .mini-info { display: flex; gap: 12px; align-items: center; overflow: hidden; flex: 1; }
+        .mini-info h5 { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mini-info p { font-size: 12px; color: var(--text-gray); }
+
+        /* --- NAV BAR --- */
+        .nav-bar { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: #000; 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 12px 0 30px 0; 
+            height: 90px; 
+            border-top: 1px solid #111; 
+            z-index: 400; 
+        }
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 6px; 
+            color: var(--text-gray); 
+            font-size: 11px; 
+            flex: 1; 
+            cursor: pointer;
+        }
+        .nav-item i { font-size: 24px; }
+        .nav-item.active { color: #fff; }
+
+        .downloading { animation: pulse 1s infinite; color: var(--primary-green) !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+    
+<body>
+
+    <div id="status-modal">
+        <i id="status-icon" class="fas fa-check-circle"></i>
+        <span id="status-text">Syncra Initialized</span>
+    </div>
+
+    <div id="full-player">
+        <div class="fp-header">
+            <i class="fas fa-chevron-down" onclick="toggleFullPlayer(false)"></i>
+            <span style="font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Playing from Syncra</span>
+            <i class="fas fa-ellipsis-v"></i>
+        </div>
+
+        <div class="fp-artwork" id="fp-art-container">
+            <img id="fp-img" src="syncra1.jpg">
+        </div>
+
+        <div class="fp-info">
+            <h2 id="fp-title">Discover Music</h2>
+            <p id="fp-artist">Select a track to start</p>
+        </div>
+
+        <div class="fp-progress-container">
+            <div class="fp-slider-bg" id="fp-seek-bar">
+                <div class="fp-slider-fill" id="fp-progress"></div>
+            </div>
+            <div class="fp-time-labels">
+                <span id="time-curr">0:00</span>
+                <span id="time-total">0:00</span>
+            </div>
+        </div>
+
+        <div class="fp-main-controls">
+            <i class="fas fa-shuffle" style="color: var(--text-gray);"></i>
+            <i class="fas fa-backward-step" onclick="playPrevious()"></i>
+            <div class="fp-play-btn" id="fp-play-main" onclick="togglePlay()">
+                <i class="fas fa-play"></i>
+            </div>
+            <i class="fas fa-forward-step" onclick="playNext()"></i>
+            <i class="fas fa-repeat" style="color: var(--text-gray);"></i>
+        </div>
+
+        <div class="fp-footer-actions">
+            <i class="fas fa-plus-square"></i>
+            <i class="fas fa-circle-down" id="fp-download" onclick="downloadCurrent()"></i>
+            <i class="fas fa-share-alt"></i>
+            <i class="fas fa-list-ul"></i>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo-area"><img src="syncra1.jpg"><h3>Syncra</h3></div>
+        <i class="fas fa-magnifying-glass" style="font-size: 20px; color: var(--text-gray);" id="search-toggle"></i>
+    </header>
+
+    <div class="search-wrapper" id="search-box">
+        <div class="search-bar">
+            <i class="fas fa-search" style="color: #666;"></i>
+            <input type="text" id="main-search" placeholder="Search for music, artists..." oninput="filterContent()">
+        </div>
+    </div>
+
+    <div class="category-container">
+        <div class="genre-ribbon">
+            <button class="genre-btn active" onclick="setGenre('All', this)">All</button>
+            <button class="genre-btn" onclick="setGenre('Gospel', this)">Gospel</button>
+            <button class="genre-btn" onclick="setGenre('Amapiano', this)">Amapiano</button>
+            <button class="genre-btn" onclick="setGenre('Highlife', this)">Highlife</button>
+            <button class="genre-btn" onclick="setGenre('Afrobeat', this)">Afrobeat</button>
+            <button class="genre-btn" onclick="setGenre('Hip Hop', this)">Hip-hop</button>
+            <button class="genre-btn" onclick="setGenre('Reggae', this)">Reggae</button>
+        </div>
+    </div>
+
+    <main id="main-content">
+        <div id="default-home">
+            <h3 class="section-title">New Releases</h3>
+            <div id="featured-cards" class="card-carousel"></div>
+
+            <h3 class="section-title">Gospel</h3>
+            <div id="gospel-cards" class="card-carousel"></div>
+
+            <h3 class="section-title">Amapiano</h3>
+            <div id="amapiano-cards" class="card-carousel"></div>
+
+            <h3 class="section-title">Highlife</h3>
+            <div id="highlife-cards" class="card-carousel"></div>
+            
+            <h3 class="section-title">Reggae</h3>
+            <div id="reggae-cards" class="card-carousel"></div>
+
+            <h3 class="section-title">Afrobeat</h3>
+            <div id="afrobeat-cards" class="card-carousel"></div>
+            
+            <h3 class="section-title">Hip-Hop</h3>
+            <div id="hiphop-cards" class="card-carousel"></div>
+        </div>
+
+        <h3 class="section-title" id="library-header">Your library</h3>
+        <div id="songs-container" class="track-list-section"></div>
+    </main>
+
+    <div class="player-bar" onclick="handleMiniPlayerClick(event)">
+        <div class="mini-info">
+            <div class="track-art-sm" style="width: 44px; height: 44px;">
+                <img id="p-img" src="syncra1.jpg">
+                <div id="p-loader" class="mini-loader"><div class="spinner"></div></div>
+            </div>
+            <div>
+                <h5 id="p-title">Not Playing</h5>
+                <p id="p-artist">Syncra Premium</p>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <i class="fas fa-play" id="mini-play-btn" onclick="togglePlay()" style="font-size: 22px;"></i>
+            <i class="fas fa-forward-step" onclick="playNext()" style="font-size: 20px; color: #fff;"></i>
+        </div>
+        <audio id="audio-core"></audio>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-item active" onclick="goHome()"><i class="fas fa-house"></i>Home</div>
+        <div class="nav-item"><i class="fas fa-compass"></i>Explore</div>
+        <div class="nav-item"><i class="fas fa-microphone-lines"></i>Identify</div>
+        <div class="nav-item"><i class="fas fa-download"></i>Downloads</div>
+        <div class="nav-item"><i class="fas fa-bookmark"></i>Library</div>
+    </nav>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDvPTE0sHKiixl6OEfreRufTh...", 
+            authDomain: "syncra-1c163.firebaseapp.com",
+            projectId: "syncra-1c163",
+            storageBucket: "syncra-1c163.appspot.com",
+            appId: "1:489014975940:web:b7fa826d5645..."
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        const audio = document.getElementById('audio-core');
+        const miniPlay = document.getElementById('mini-play-btn');
+        const mainPlay = document.getElementById('fp-play-main');
+        const pLoader = document.getElementById('p-loader');
+        const fpProgress = document.getElementById('fp-progress');
+
+        let allSongs = [];
+        let songQueue = [];
+        let currentIndex = -1;
+
+        // --- SEARCH TOGGLE ---
+        document.getElementById('search-toggle').onclick = () => {
+            const box = document.getElementById('search-box');
+            box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.filterContent = () => {
+            const term = document.getElementById('main-search').value.toLowerCase();
+            const filtered = allSongs.filter(s => 
+                s.title.toLowerCase().includes(term) || 
+                s.artist.toLowerCase().includes(term)
+            );
+            document.getElementById('default-home').style.display = term ? 'none' : 'block';
+            document.getElementById('library-header').innerText = term ? "Search Results" : "Your library";
+            renderLibrary(filtered);
+        };
+
+        window.setGenre = (genre, btn) => {
+            document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if(genre === 'All') {
+                document.getElementById('default-home').style.display = 'block';
+                renderLibrary(allSongs);
+            } else {
+                document.getElementById('default-home').style.display = 'none';
+                const filtered = allSongs.filter(s => s.genre === genre);
+                renderLibrary(filtered);
+            }
+        };
+
+        window.toggleFullPlayer = (show) => {
+            document.getElementById('full-player').style.display = show ? 'flex' : 'none';
+        };
+
+        window.handleMiniPlayerClick = (e) => {
+            if (e.target.id !== 'mini-play-btn' && !e.target.closest('.fa-forward-step')) {
+                toggleFullPlayer(true);
+            }
+        };
+
+        window.togglePlay = () => {
+            if (!audio.src) return;
+            audio.paused ? audio.play() : audio.pause();
+        };
+
+        audio.onplaying = () => {
+            miniPlay.className = 'fas fa-pause';
+            mainPlay.innerHTML = '<i class="fas fa-pause"></i>';
+        };
+
+        audio.onpause = () => {
+            miniPlay.className = 'fas fa-play';
+            mainPlay.innerHTML = '<i class="fas fa-play"></i>';
+        };
+
+        audio.ontimeupdate = () => {
+            const ratio = (audio.currentTime / audio.duration) * 100;
+            fpProgress.style.width = ratio + '%';
+            const m = Math.floor(audio.currentTime / 60);
+            const s = Math.floor(audio.currentTime % 60);
+            document.getElementById('time-curr').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            
+            if(!isNaN(audio.duration)) {
+                const dm = Math.floor(audio.duration / 60);
+                const ds = Math.floor(audio.duration % 60);
+                document.getElementById('time-total').innerText = `${dm}:${ds < 10 ? '0' : ''}${ds}`;
+            }
+        };
+
+        window.playTrack = (song, queue) => {
+            songQueue = queue;
+            currentIndex = queue.findIndex(s => s.audioUrl === song.audioUrl);
+            audio.src = song.audioUrl;
+            document.getElementById('p-title').innerText = song.title;
+            document.getElementById('p-artist').innerText = song.artist;
+            document.getElementById('p-img').src = song.thumbnailUrl || 'syncra1.jpg';
+            document.getElementById('fp-title').innerText = song.title;
+            document.getElementById('fp-artist').innerText = song.artist;
+            document.getElementById('fp-img').src = song.thumbnailUrl || 'syncra1.jpg';
+            audio.play();
+        };
+
+        window.playNext = () => {
+            if (currentIndex < songQueue.length - 1) playTrack(songQueue[++currentIndex], songQueue);
+        };
+
+        window.playPrevious = () => {
+            if (currentIndex > 0) playTrack(songQueue[--currentIndex], songQueue);
+        };
+
+        async function fetchSongs() {
+            try {
+                const snap = await getDocs(collection(db, "songs"));
+                allSongs = snap.docs.map(doc => doc.data());
+                renderAll(allSongs);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderAll(songs) {
+            const categories = ["Gospel", "Amapiano", "Highlife", "Reggae", "Afrobeat", "Hip-hop"];
+            
+            // New Releases Row
+            document.getElementById('featured-cards').innerHTML = "";
+            songs.slice(0, 8).forEach(s => document.getElementById('featured-cards').appendChild(createCard(s, songs)));
+
+            // Genre Rows
+            categories.forEach(cat => {
+                const id = cat.toLowerCase().replace('-', '') + "-cards";
+                const container = document.getElementById(id);
+                if(container) {
+                    container.innerHTML = "";
+                    const filtered = songs.filter(s => s.genre === cat);
+                    filtered.forEach(s => container.appendChild(createCard(s, filtered)));
+                }
+            });
+
+            renderLibrary(songs);
+        }
+
+        function createCard(song, queue) {
+            const div = document.createElement('div');
+            div.className = 'music-card';
+            div.innerHTML = `<div class="card-art"><img src="${song.thumbnailUrl || 'syncra1.jpg'}"></div><h4>${song.title}</h4>`;
+            div.onclick = () => playTrack(song, queue);
+            return div;
+        }
+
+        function renderLibrary(songs) {
+            const container = document.getElementById('songs-container');
+            container.innerHTML = "";
+            songs.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'track-item';
+                item.innerHTML = `
+                    <div class="track-art-sm"><img src="${s.thumbnailUrl || 'syncra1.jpg'}"></div>
+                    <div style="flex:1"><h4>${s.title}</h4><p style="font-size:12px; color:#aaa;">${s.artist}</p></div>
+                    <i class="fas fa-ellipsis-h" style="color:#444"></i>
+                `;
+                item.onclick = () => playTrack(s, songs);
+                container.appendChild(item);
+            });
+        }
+
+        fetchSongs();
+    </script>
+</body>
+</html>
